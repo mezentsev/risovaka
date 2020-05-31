@@ -4,13 +4,17 @@ import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.WebSocketSession
 import io.ktor.http.cio.websocket.close
+import io.ktor.sessions.CurrentSession
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
+import io.ktor.sessions.set
+import io.ktor.util.generateNonce
 import io.ktor.websocket.WebSocketServerSession
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import pro.mezentsev.risovaka.session.models.Session
 import pro.mezentsev.risovaka.session.models.User
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -18,8 +22,16 @@ class SessionController: SessionHolder, MessageSender {
 
     private val sessionCounter = AtomicInteger()
     private val users = ConcurrentHashMap<Session, User>()
-    private val sessions = ConcurrentHashMap<Session, WebSocketSession>()
+    private val sessions = ConcurrentHashMap<Session, CopyOnWriteArrayList<WebSocketSession>>()
     private val lifecycleListeners = CopyOnWriteArraySet<SessionLifecycleListener>()
+
+    fun interceptSession(sessions: CurrentSession) {
+        if (sessions.get<Session>() == null) {
+            sessions.set(generateSession())
+        }
+    }
+
+    private fun generateSession() = Session(generateNonce(), "user${sessionCounter.getAndIncrement()}")
 
     suspend fun startSession(socket: WebSocketServerSession): Session? {
         val session = socket.call.sessions.get<Session>()
@@ -30,28 +42,36 @@ class SessionController: SessionHolder, MessageSender {
             return null
         }
 
-        if (sessions.containsKey(session)) {
-            socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Session already exists"))
+        val sockets = sessions.computeIfAbsent(session) { CopyOnWriteArrayList<WebSocketSession>() }
+        val user = users.computeIfAbsent(session) { User(session.name) }
+
+        if (sockets.size == 5) {
+            socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Can't handle more sessions"))
             return null
         }
+        sockets.add(socket)
 
-        sessions.computeIfAbsent(session) { socket }
-        val user = users.computeIfAbsent(session) { User("user${sessionCounter.incrementAndGet()}") }
-
-        val listeners = lifecycleListeners
-        listeners.forEach { it.onStart(session, user, socket) }
+        lifecycleListeners.forEach { listener ->
+            listener.onStart(session, user.copy(), sockets.size, socket)
+        }
 
         return session
     }
 
     fun closeSession(session: Session, socket: WebSocketServerSession) {
         val user = users[session] ?: return
+        val sockets = sessions[session] ?: return
 
-        val listeners = lifecycleListeners
-        listeners.forEach { it.onFinish(session, user.copy() , socket) }
+        lifecycleListeners.forEach { listener ->
+            listener.onFinish(session, user.copy(), sockets.size, socket)
+        }
 
-        sessions.remove(session)
-        users.remove(session)
+        if (sockets.size == 1) {
+            sessions.remove(session)
+            users.remove(session)
+        } else {
+            sockets.remove(socket)
+        }
     }
 
     override fun all(): List<User> {
@@ -63,7 +83,7 @@ class SessionController: SessionHolder, MessageSender {
     }
 
     override fun set(session: Session, user: User) {
-        users[session] = user
+        users[session] = user.copy()
     }
 
     override fun setSessionListener(listener: SessionLifecycleListener?) {
@@ -75,11 +95,21 @@ class SessionController: SessionHolder, MessageSender {
     override suspend fun sendTo(to: Session, text: String) {
         this.sessions
             .filterKeys { it == to }
-            .forEach { (_, socket) -> socket.sendFrame(Frame.Text(text)) }
+            .forEach { (_, sockets) -> sockets.sendFrame(Frame.Text(text)) }
+    }
+
+    override suspend fun sendTo(to: WebSocketSession, text: String) {
+        to.sendFrame(Frame.Text(text))
     }
 
     override suspend fun broadcast(text: String) {
-        this.sessions.forEach { (_, socket) -> socket.sendFrame(Frame.Text(text)) }
+        this.sessions.forEach { (_, sockets) -> sockets.sendFrame(Frame.Text(text)) }
+    }
+
+    private suspend fun List<WebSocketSession>.sendFrame(frame: Frame) {
+        forEach { socket ->
+            socket.sendFrame(frame.copy())
+        }
     }
 
     private suspend fun WebSocketSession.sendFrame(frame: Frame) {

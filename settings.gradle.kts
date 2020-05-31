@@ -1,2 +1,3 @@
 rootProject.name = "risovaka"
-include("backend", "client")
+include("backend", "session", "chat:server")
+include("client")

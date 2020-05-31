@@ -18,8 +18,8 @@ import io.ktor.response.respond
 import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.routing
-import io.ktor.sessions.*
-import io.ktor.util.generateNonce
+import io.ktor.sessions.Sessions
+import io.ktor.sessions.cookie
 import io.ktor.websocket.WebSockets
 import kotlinx.css.*
 import kotlinx.html.*
@@ -57,9 +57,7 @@ fun Application.module(testing: Boolean = false) {
 
     // This adds an interceptor that will create a specific session in each request if no session is available already.
     intercept(ApplicationCallPipeline.Features) {
-        if (call.sessions.get<Session>() == null) {
-            call.sessions.set(Session(generateNonce()))
-        }
+        router.interceptSession(call)
     }
 
     install(Compression) {
@@ -122,18 +120,21 @@ fun Application.module(testing: Boolean = false) {
         }
 
         get("/html-freemarker") {
-            call.respond(FreeMarkerContent("index.ftl", mapOf("data" to IndexData(listOf(1, 2, 3))), ""))
+            call.respond(FreeMarkerContent("index.ftl", mapOf("data" to IndexData(
+                listOf(1, 2, 3)
+            )
+            ), ""))
         }
 
         get("/json/gson") {
             call.respond(mapOf("hello" to "world"))
         }
 
-        get("/session/increment") {
-            val session = call.sessions.get<Session>() ?: Session(generateNonce())
-            call.sessions.set(session.copy(id = session.id + 1))
-            call.respondText("Counter is ${session.id}. Refresh to increment.")
-        }
+//        get("/session/increment") {
+//            val session = call.sessions.get<Session>() ?: Session(generateNonce())
+//            call.sessions.set(session.copy(id = session.id + 1))
+//            call.respondText("Counter is ${session.id}. Refresh to increment.")
+//        }
     }
 }
 

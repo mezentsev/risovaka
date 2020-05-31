@@ -1,8 +1,10 @@
 package pro.mezentsev.risovaka
 
+import io.ktor.application.ApplicationCall
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.routing.Routing
+import io.ktor.sessions.sessions
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
 import pro.mezentsev.risovaka.chat.ChatRouter
@@ -36,5 +38,9 @@ class Router {
             command.startsWith("/chat") ->
                 chatRouter.handleMessage(session, command.removePrefix("/chat"))
         }
+    }
+
+    fun interceptSession(call: ApplicationCall) {
+        sessionController.interceptSession(call.sessions)
     }
 }

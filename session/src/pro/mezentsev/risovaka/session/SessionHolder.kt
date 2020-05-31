@@ -12,6 +12,16 @@ interface SessionHolder {
 }
 
 interface SessionLifecycleListener {
-    fun onStart(session: Session, user: User, ws: WebSocketSession)
-    fun onFinish(session: Session, user: User, ws: WebSocketSession)
+    fun onStart(
+        session: Session,
+        user: User,
+        sessionSocketsSize: Int,
+        openedSocket: WebSocketSession
+    )
+    fun onFinish(
+        session: Session,
+        user: User,
+        sessionSocketsSize: Int,
+        closedSocket: WebSocketSession
+    )
 }
