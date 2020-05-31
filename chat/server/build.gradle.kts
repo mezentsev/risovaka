@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 val logback_version: String by project
 val ktor_version: String by project
 val kotlin_version: String by project
@@ -8,8 +6,7 @@ plugins {
     kotlin("jvm")
 }
 
-
-group = "pro.mezentsev.risovaka.chat"
+group = "pro.mezentsev.risovaka.chat.server"
 version = "0.1"
 
 repositories {
@@ -21,8 +18,6 @@ repositories {
 
 dependencies {
     implementation(project(":session"))
-
-    implementation(kotlin("stdlib-jdk8"))
 
     implementation(ktor("server-core"))
     implementation(ktor("server-sessions"))
@@ -44,9 +39,5 @@ kotlin.sourceSets["test"].kotlin.srcDirs("test")
 
 sourceSets["main"].resources.srcDirs("resources")
 sourceSets["test"].resources.srcDirs("testresources")
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
-}
 
 fun ktor(artifact: String) = "io.ktor:ktor-$artifact:$ktor_version"
