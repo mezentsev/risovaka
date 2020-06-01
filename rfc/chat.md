@@ -3,7 +3,8 @@
 ### Send
 
 1. Message to server
-Message to server
+
+#### Message
 ```
 {
 	"id": String,			// required
@@ -15,7 +16,8 @@ Message to server
 ### Receive 
 
 1. Message from server
-Message from server
+
+#### Message
 ```
 {
 	"id": String,								// required
@@ -28,7 +30,7 @@ Message from server
 }
 ```
 
-Reaction
+#### Reaction
 ```
 {
 	"name": String,					// required
