@@ -42,6 +42,7 @@ dependencies {
 
     implementation("org.jetbrains:kotlin-css-jvm:1.0.0-pre.94-kotlin-1.3.70")
     implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("io.github.microutils:kotlin-logging:1.7.9")
 
     testImplementation(ktor("server-tests"))
 }

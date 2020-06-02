@@ -22,6 +22,8 @@ dependencies {
     implementation(ktor("server-sessions"))
     implementation(ktor("server-host-common"))
 
+    implementation(ktor("gson"))
+
     implementation(ktor("client-websockets"))
     implementation(ktor("client-logging-jvm"))
 

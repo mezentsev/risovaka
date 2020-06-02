@@ -52,9 +52,9 @@ function connect() {
  *
  * @param message The textual message
  */
-function received(message) {
+function received(jsonString) {
     // Out only logic upon message receiving is to output in the messages container to notify the user.
-    write(message);
+    write(jsonString);
 }
 
 /**
@@ -62,17 +62,16 @@ function received(message) {
  *
  * @param message The message to write in the container
  */
-function write(message) {
-    shouldBold = message.startsWith("[b]")
-    if (shouldBold) {
-        message = message.slice(3);
-    }
+function write(jsonString) {
+    var message = JSON.parse(jsonString);
+    var from = message.from ? message.from : message.type;
+
     // We first create an HTML paragraph and sets its class and contents.
     // Since we are using the textContent property.
     // No HTML is processed and every html-related character is escaped property. So this should be safe.
     var line = document.createElement("p");
-    line.className = shouldBold ? "message-bold" : "message";
-    line.textContent = message;
+    line.className = (message.type == "SYSTEM") ? "message-bold" : "message";
+    line.textContent = "[" + from + "] " + message.text;
 
     // Then we get the 'messages' container that should be available in the HTML itself already.
     var messagesDiv = document.getElementById("messages");
@@ -92,8 +91,18 @@ function onSend() {
         var text = input.value;
         // Validates that there is a text and that the socket exists
         if (text && socket) {
+            var data = JSON.stringify({
+                "channel": {
+                    "type": "chat",
+                    "room": "test_room_id"
+                },
+                "message": {
+                    "timestamp": Date.now(),
+                    "text": text
+                }
+            });
             // Sends the text
-            socket.send("/chat" + text);
+            socket.send(data);
             // Clears the input so the user can type a new command or text to say
             input.value = "";
         }

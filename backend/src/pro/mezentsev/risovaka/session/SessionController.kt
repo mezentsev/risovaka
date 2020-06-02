@@ -11,6 +11,7 @@ import io.ktor.sessions.set
 import io.ktor.util.generateNonce
 import io.ktor.websocket.WebSocketServerSession
 import kotlinx.coroutines.channels.ClosedSendChannelException
+import pro.mezentsev.risovaka.Logger
 import pro.mezentsev.risovaka.session.models.Session
 import pro.mezentsev.risovaka.session.models.User
 import java.util.concurrent.ConcurrentHashMap
@@ -18,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicInteger
 
-class SessionController: SessionHolder, MessageSender {
+class SessionController: SessionHolder, SocketSender {
 
     private val sessionCounter = AtomicInteger()
     private val users = ConcurrentHashMap<Session, User>()
@@ -95,26 +96,27 @@ class SessionController: SessionHolder, MessageSender {
     override suspend fun sendTo(to: Session, text: String) {
         this.sessions
             .filterKeys { it == to }
-            .forEach { (_, sockets) -> sockets.sendFrame(Frame.Text(text)) }
+            .forEach { (_, sockets) -> sockets.send(text) }
     }
 
     override suspend fun sendTo(to: WebSocketSession, text: String) {
-        to.sendFrame(Frame.Text(text))
+        to.send(Frame.Text(text))
     }
 
     override suspend fun broadcast(text: String) {
-        this.sessions.forEach { (_, sockets) -> sockets.sendFrame(Frame.Text(text)) }
+        this.sessions.forEach { (_, sockets) -> sockets.send(text) }
     }
 
-    private suspend fun List<WebSocketSession>.sendFrame(frame: Frame) {
+    private suspend fun List<WebSocketSession>.send(text: String) {
         forEach { socket ->
-            socket.sendFrame(frame.copy())
+            socket.send(text)
         }
     }
 
-    private suspend fun WebSocketSession.sendFrame(frame: Frame) {
+    private suspend fun WebSocketSession.send(text: String) {
         try {
-            send(frame.copy())
+            Logger.d("Send text: $text")
+            send(Frame.Text(text))
         } catch (t: Throwable) {
             try {
                 close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, ""))
