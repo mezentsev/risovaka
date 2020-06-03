@@ -1,41 +1,57 @@
 ## Chat
 
-### Send
-
-1. Message to server
-
-#### Message
+### Types
+#### Channel
 ```
 {
-	"id": String,			// required
-	"message": String,		// required
-	"timestamp": String		// required
+    "type": String ["chat"],
+    "room": String
 }
 ```
 
-### Receive 
-
-1. Message from server
-
-#### Message
+#### ChatMessage
 ```
 {
-	"id": String,								// required
-	"message": String,							// required
-	"timestamp": String,						// required
-	"type": String [system/broadcast/silent], 	// required: system - message for all from system, broadcast - for all from single author, silent - only for you
-	"from": String,								// required: name of message owner
-	"reactions": Array[Reaction]
-
+    "text": String,
+    "timestamp": String,
+    "id": String?,            // for receive only: uid
+    "type": ChatMessageType?, // for receive only
+    "from": String?           // for receive only: name of message owner
 }
+```
+
+#### ChatMessageType
+```
+["system"/"broadcast"] // system - message from system, 
+                       // broadcast - this message has sent to all users
+                       // Can be null
 ```
 
 #### Reaction
 ```
 {
-	"name": String,					// required
-	"count": Int					// required
-	"description: String,			// required
-	"icon_url": String				// required
+    "name": String,
+    "count": Int,
+    "icon_url": String,
+    "description: String
+}
+```
+
+### Send a message to server
+
+```
+{
+    "channel": Channel,
+    "message": ChatMessage
+}
+```
+
+### Receive a message from server
+
+```
+{
+    "channel": Channel,
+    "message": ChatMessage,
+    "reactions": Array[Reaction]
 }
 ```

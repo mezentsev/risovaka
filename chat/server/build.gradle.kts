@@ -28,6 +28,7 @@ dependencies {
 
     implementation(ktor("websockets"))
     implementation(ktor("metrics"))
+    implementation(ktor("gson"))
 
     implementation("ch.qos.logback:logback-classic:$logback_version")
 
