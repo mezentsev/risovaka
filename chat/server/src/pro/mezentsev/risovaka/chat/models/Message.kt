@@ -1,6 +1,7 @@
 package pro.mezentsev.risovaka.chat.models
 
-import com.google.gson.Gson
+import pro.mezentsev.risovaka.common.models.Channel
+import pro.mezentsev.risovaka.common.models.ChannelType
 import java.util.*
 
 data class MessageDto(
@@ -12,10 +13,9 @@ data class Message(
     val id: String = UUID.randomUUID().toString(),
     val timestamp: String = System.currentTimeMillis().toString(),
     val type: MessageType = MessageType.BROADCAST,
-    val from: String? = null
-) {
-    fun asJsonString() = Gson().toJson(this)
-}
+    val from: String? = null,
+    val channel: Channel = Channel(ChannelType.CHAT)
+)
 
 enum class MessageType{
     BROADCAST,

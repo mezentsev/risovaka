@@ -1,4 +1,4 @@
-package pro.mezentsev.risovaka
+package pro.mezentsev.risovaka.common
 
 import mu.KotlinLogging
 
