@@ -77,8 +77,8 @@ function write(jsonString) {
 }
 
 function handleChat(message) {
-    var from = message.from ? message.from : message.type;
-    showText("[" + from + "] " + message.text, message.type == "SYSTEM")
+    var from = message.from ? "[" + message.from + "] " : "";
+    showText(from + message.text, message.type == "SYSTEM")
 }
 
 function handleUserSettings(message) {
