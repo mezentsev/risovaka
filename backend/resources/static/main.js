@@ -20,7 +20,7 @@ function connect() {
     // We set a handler upon connection.
     // What this does is to put a text in the messages container notifying about this event.
     socket.onopen = function() {
-        write("Connected");
+        showText("Connected", true);
     };
 
     // If the connection was closed gracefully (either normally or with a reason from the server),
@@ -64,20 +64,40 @@ function received(jsonString) {
  */
 function write(jsonString) {
     var message = JSON.parse(jsonString);
-    var from = message.from ? message.from : message.type;
+    switch (message.channel.type) {
+        case "chat":
+            handleChat(message);
+            break;
+        case "user_settings":
+            handleUserSettings(message);
+            break;
+        default:
+            console.log("Can't handle " + message);
+    }
+}
 
-    // We first create an HTML paragraph and sets its class and contents.
-    // Since we are using the textContent property.
-    // No HTML is processed and every html-related character is escaped property. So this should be safe.
+function handleChat(message) {
+    var from = message.from ? "[" + message.from + "] " : "";
+    showText(from + message.text, message.type == "SYSTEM")
+}
+
+function handleUserSettings(message) {
+    switch (message.action) {
+        case "rename":
+            document.cookie = "USER_SETTINGS=" + encodeURIComponent("name=#s" + message.name);
+            break;
+        default:
+            console.log("Can't handle action " + message.action);
+    }
+}
+
+function showText(text, isBold) {
     var line = document.createElement("p");
-    line.className = (message.type == "SYSTEM") ? "message-bold" : "message";
-    line.textContent = "[" + from + "] " + message.text;
+    line.className = isBold ? "message-bold" : "message";
+    line.textContent = text
 
-    // Then we get the 'messages' container that should be available in the HTML itself already.
     var messagesDiv = document.getElementById("messages");
-    // We adds the text
     messagesDiv.appendChild(line);
-    // We scroll the container to where this text is so the use can see it on long conversations if he/she has scrolled up.
     messagesDiv.scrollTop = line.offsetTop;
 }
 

@@ -18,6 +18,7 @@ repositories {
 
 dependencies {
     implementation(project(":session"))
+    implementation(project(":common"))
 
     implementation(ktor("server-core"))
     implementation(ktor("server-sessions"))

@@ -52,12 +52,13 @@ internal class ChatServer(
      */
     fun rename(session: Session, to: String) = when {
         to.isEmpty() -> Message("/user [newName]", type = MessageType.SYSTEM).sendTo(session)
-        to.length > 50 -> Message("[b][server] new name is too long: 50 characters limit", type = MessageType.SYSTEM).sendTo(session)
+        to.length > 50 -> Message("New name is too long: 50 characters limit", type = MessageType.SYSTEM).sendTo(session)
         else -> {
             val user = sessions[session]
 
             user?.let {
                 sessions[session] = User(to)
+                sender.sendUserSettings(session, to)
                 Message("Member renamed from [${it.name}] to [$to]", type = MessageType.SYSTEM).broadcast()
             }
         }
@@ -82,7 +83,7 @@ internal class ChatServer(
      * Handles unsupported command.
      */
     fun customCommand(session: Session, command: String) {
-        Message("Unknown command ${command.takeWhile { !it.isWhitespace() }}").sendTo(session)
+        Message("Unknown command ${command.takeWhile { !it.isWhitespace() }}", type = MessageType.SYSTEM).sendTo(session)
     }
 
     /**

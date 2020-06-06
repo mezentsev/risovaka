@@ -1,4 +1,4 @@
-package pro.mezentsev.risovaka.communication.models
+package pro.mezentsev.risovaka.common.models
 
 import com.google.gson.annotations.SerializedName
 
@@ -14,5 +14,7 @@ data class Channel(
 enum class ChannelType {
     @SerializedName("chat")
     CHAT,
+    @SerializedName("user_settings")
+    USER_SETTINGS,
     NONE
 }

@@ -11,7 +11,7 @@ import io.ktor.sessions.set
 import io.ktor.util.generateNonce
 import io.ktor.websocket.WebSocketServerSession
 import kotlinx.coroutines.channels.ClosedSendChannelException
-import pro.mezentsev.risovaka.Logger
+import pro.mezentsev.risovaka.common.Logger
 import pro.mezentsev.risovaka.session.models.Session
 import pro.mezentsev.risovaka.session.models.User
 import java.util.concurrent.ConcurrentHashMap
@@ -30,21 +30,26 @@ class SessionController: SessionHolder, SocketSender {
         if (sessions.get<Session>() == null) {
             sessions.set(generateSession())
         }
+        if (sessions.get<User>() == null) {
+            sessions.set(generateUser())
+        }
     }
 
-    private fun generateSession() = Session(generateNonce(), "user${sessionCounter.getAndIncrement()}")
+    private fun generateSession() = Session(generateNonce())
+    private fun generateUser() = User("user${sessionCounter.getAndIncrement()}")
 
     suspend fun startSession(socket: WebSocketServerSession): Session? {
         val session = socket.call.sessions.get<Session>()
+        val userSettings = socket.call.sessions.get<User>()
         // We check that we actually have a session. We should always have one,
         // since we have defined an interceptor before to set one.
-        if (session == null) {
+        if (session == null || userSettings == null) {
             socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "No session"))
             return null
         }
 
         val sockets = sessions.computeIfAbsent(session) { CopyOnWriteArrayList<WebSocketSession>() }
-        val user = users.computeIfAbsent(session) { User(session.name) }
+        val user = users.computeIfAbsent(session) { User(userSettings.name) }
 
         if (sockets.size == 5) {
             socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Can't handle more sessions"))

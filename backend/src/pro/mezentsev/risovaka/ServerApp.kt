@@ -25,6 +25,7 @@ import kotlinx.css.*
 import kotlinx.html.*
 import org.slf4j.event.Level
 import pro.mezentsev.risovaka.session.models.Session
+import pro.mezentsev.risovaka.session.models.User
 import java.time.Duration
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
@@ -52,7 +53,12 @@ fun Application.module(testing: Boolean = false) {
     }
 
     install(Sessions) {
-        cookie<Session>("SESSION")
+        cookie<Session>("SESSION") {
+            cookie.httpOnly = false
+        }
+        cookie<User>("USER_SETTINGS") {
+            cookie.httpOnly = false
+        }
     }
 
     // This adds an interceptor that will create a specific session in each request if no session is available already.
