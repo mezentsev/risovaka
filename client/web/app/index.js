@@ -9,7 +9,8 @@ function connect() {
     // The socket will be connected automatically asap. Not now but after returning to the event loop,
     // so we can register handlers safely before the connection is performed.
     console.log("Begin connect");
-    socket = new WebSocket("ws://" + window.location.host + "/ws");
+    console.log('process.env', process.env.API_HOST);
+    socket = new WebSocket("ws://" + process.env.API_HOST + "/ws");
 
     // We set a handler that will be executed if the socket has any kind of unexpected error.
     // Since this is a just sample, we only report it at the console instead of making more complex things.
